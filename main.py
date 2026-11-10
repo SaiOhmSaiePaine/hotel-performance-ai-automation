@@ -64,6 +64,11 @@ def run_pipeline(
 
         status_flag = "✓ SENT" if dispatch_res["sent_via_smtp"] else f"• {dispatch_res['status']}"
         print(f"      [{profile.tier[:4]}] Row {profile.row_index:02d}: {profile.brandname[:28]:<28} -> {status_flag}")
+        
+        # Pacing delay to avoid OpenRouter rate limits
+        if agent.api_key and idx < len(profiles) - 1:
+            import time
+            time.sleep(1.0)
 
     # Summary
     print("\n" + "=" * 72)
