@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from dataclasses import dataclass
 from typing import Optional
 import requests
@@ -213,8 +214,8 @@ class EmailAgent:
     def _markdown_to_clean_html(self, md_text: str, tier: str) -> str:
         """
         Renders responsive, elegant HTML email markup with consistent typography and callout styling.
+        Robustly parses headings, bullets (-, *, ●), numbered lists, and paragraphs.
         """
-        # Determine theme accent color
         if tier == "TOP_PERFORMER":
             badge_color = "#16a34a"
             badge_bg = "#dcfce7"
@@ -228,38 +229,80 @@ class EmailAgent:
             badge_bg = "#dbeafe"
             badge_text = "Weekly Digest"
 
-        # Basic markdown to HTML transformation
-        paragraphs = md_text.split("\n\n")
+        lines = md_text.strip().splitlines()
         html_parts = []
-        for p in paragraphs:
-            p = p.strip()
-            if not p:
+        in_ul = False
+        in_ol = False
+        paragraph_buf = []
+
+        def flush_paragraph():
+            nonlocal paragraph_buf
+            if paragraph_buf:
+                text = "<br/>".join(paragraph_buf).strip()
+                if text:
+                    formatted = self._bold_replacer(text)
+                    html_parts.append(f"<p style='color:#334155;line-height:1.6;margin:12px 0;'>{formatted}</p>")
+                paragraph_buf = []
+
+        def close_lists():
+            nonlocal in_ul, in_ol
+            if in_ul:
+                html_parts.append("</ul>")
+                in_ul = False
+            if in_ol:
+                html_parts.append("</ol>")
+                in_ol = False
+
+        for raw_line in lines:
+            line = raw_line.strip()
+            if not line:
+                flush_paragraph()
+                close_lists()
                 continue
-            if p.startswith("### "):
-                html_parts.append(f"<h3 style='color:#1e293b;margin:20px 0 10px 0;font-size:18px;'>{p[4:]}</h3>")
-            elif p.startswith("- "):
-                items = p.split("\n")
-                list_html = "<ul style='padding-left:20px;color:#334155;line-height:1.6;margin:10px 0;'>"
-                for item in items:
-                    clean_item = item.lstrip("- *").strip()
-                    # Bold markdown
-                    clean_item = self._bold_replacer(clean_item)
-                    list_html += f"<li style='margin-bottom:6px;'>{clean_item}</li>"
-                list_html += "</ul>"
-                html_parts.append(list_html)
-            elif p[0:2].isdigit() and p[2:4] in [". ", ") "]:
-                items = p.split("\n")
-                list_html = "<ol style='padding-left:20px;color:#334155;line-height:1.6;margin:10px 0;'>"
-                for item in items:
-                    clean_item = item.lstrip("0123456789.) ").strip()
-                    clean_item = self._bold_replacer(clean_item)
-                    list_html += f"<li style='margin-bottom:6px;'>{clean_item}</li>"
-                list_html += "</ol>"
-                html_parts.append(list_html)
-            else:
-                formatted = self._bold_replacer(p)
-                formatted = formatted.replace("\n", "<br/>")
-                html_parts.append(f"<p style='color:#334155;line-height:1.6;margin:12px 0;'>{formatted}</p>")
+
+            # Heading (###, ##, #)
+            heading_match = re.match(r"^(#{1,3})\s+(.*)$", line)
+            if heading_match:
+                flush_paragraph()
+                close_lists()
+                heading_text = self._bold_replacer(heading_match.group(2).strip())
+                html_parts.append(f"<h3 style='color:#1e293b;margin:22px 0 10px 0;font-size:17px;font-weight:700;'>{heading_text}</h3>")
+                continue
+
+            # Bullet list (- or * or ●)
+            bullet_match = re.match(r"^[-*●]\s+(.*)$", line)
+            if bullet_match:
+                flush_paragraph()
+                if in_ol:
+                    html_parts.append("</ol>")
+                    in_ol = False
+                if not in_ul:
+                    html_parts.append("<ul style='padding-left:20px;color:#334155;line-height:1.6;margin:10px 0;'>")
+                    in_ul = True
+                item_text = self._bold_replacer(bullet_match.group(1).strip())
+                html_parts.append(f"<li style='margin-bottom:6px;'>{item_text}</li>")
+                continue
+
+            # Numbered list (1. or 1))
+            num_match = re.match(r"^\d+[\.\)]\s+(.*)$", line)
+            if num_match:
+                flush_paragraph()
+                if in_ul:
+                    html_parts.append("</ul>")
+                    in_ul = False
+                if not in_ol:
+                    html_parts.append("<ol style='padding-left:20px;color:#334155;line-height:1.6;margin:10px 0;'>")
+                    in_ol = True
+                item_text = self._bold_replacer(num_match.group(1).strip())
+                html_parts.append(f"<li style='margin-bottom:6px;'>{item_text}</li>")
+                continue
+
+            # Regular text line
+            close_lists()
+            paragraph_buf.append(line)
+
+        flush_paragraph()
+        close_lists()
 
         content_body = "\n".join(html_parts)
 
@@ -294,7 +337,7 @@ class EmailAgent:
 </html>"""
 
     def _bold_replacer(self, text: str) -> str:
-        import re
+        text = re.sub(r"\*\*\*(.*?)\*\*\*", r"<strong><em>\1</em></strong>", text)
         text = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", text)
         text = re.sub(r"\*(.*?)\*", r"<em>\1</em>", text)
         return text

@@ -1,3 +1,4 @@
+import io
 import os
 import re
 from dataclasses import dataclass
@@ -34,7 +35,6 @@ def load_hotel_data(file_path: Optional[str] = None, google_sheet_url: Optional[
 
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()
-        import io
         df = pd.read_csv(io.StringIO(resp.text))
     else:
         path = file_path or "data/hotel_performance.xlsx"

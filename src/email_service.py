@@ -75,6 +75,11 @@ class EmailDispatcher:
                 result["message"] = f"Dry run active: Preview saved to {html_path}. Real send to {target_recipient} skipped."
                 return result
 
+            if "example.com" in target_recipient.lower():
+                result["status"] = "EXAMPLE_DOMAIN_SKIPPED"
+                result["message"] = f"Row 1 preview saved to {html_path}. SMTP send skipped because '{target_recipient}' is a mock example.com address. Set TEST_EMAIL in .env to receive live email."
+                return result
+
             if not self.smtp_user or not self.smtp_password:
                 result["status"] = "CREDENTIALS_MISSING"
                 result["message"] = (
