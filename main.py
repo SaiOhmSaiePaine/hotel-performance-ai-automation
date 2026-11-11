@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import time
 from dotenv import load_dotenv
 
 # Load environment variables from .env
@@ -50,25 +51,27 @@ def run_pipeline(
     # 4. Dispatch & Safety Routing
     print(f"\n[4/4] Executing Smart Safety Routing & Local Archiving...")
     results = []
-    for idx, profile in enumerate(profiles):
-        email_content = agent.generate_email(profile, benchmarks)
-        is_row_1 = (idx == 0)
+    try:
+        for idx, profile in enumerate(profiles):
+            email_content = agent.generate_email(profile, benchmarks)
+            is_row_1 = (idx == 0)
 
-        dispatch_res = dispatcher.dispatch(
-            profile=profile,
-            email_content=email_content,
-            is_row_1=is_row_1,
-            dry_run=dry_run
-        )
-        results.append(dispatch_res)
+            dispatch_res = dispatcher.dispatch(
+                profile=profile,
+                email_content=email_content,
+                is_row_1=is_row_1,
+                dry_run=dry_run
+            )
+            results.append(dispatch_res)
 
-        status_flag = "✓ SENT" if dispatch_res["sent_via_smtp"] else f"• {dispatch_res['status']}"
-        print(f"      [{profile.tier[:4]}] Row {profile.row_index:02d}: {profile.brandname[:28]:<28} -> {status_flag}")
-        
-        # Pacing delay to avoid OpenRouter rate limits
-        if agent.api_key and idx < len(profiles) - 1:
-            import time
-            time.sleep(1.0)
+            status_flag = "✓ SENT" if dispatch_res["sent_via_smtp"] else f"• {dispatch_res['status']}"
+            print(f"      [{profile.tier[:4]}] Row {profile.row_index:02d}: {profile.brandname[:28]:<28} -> {status_flag}")
+
+            # Pacing delay to avoid OpenRouter rate limits
+            if agent.api_key and idx < len(profiles) - 1:
+                time.sleep(1.0)
+    finally:
+        dispatcher.close()
 
     # Summary
     print("\n" + "=" * 72)

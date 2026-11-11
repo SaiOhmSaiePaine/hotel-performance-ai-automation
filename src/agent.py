@@ -21,6 +21,8 @@ class EmailAgent:
         # Default model set to DeepSeek as requested
         self.model = model or os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-chat").strip()
         self.openrouter_url = "https://openrouter.ai/api/v1/chat/completions"
+        self.session = requests.Session()
+
 
     def generate_email(
         self, profile: HotelPerformanceProfile, benchmarks: PortfolioBenchmarks
@@ -39,9 +41,12 @@ class EmailAgent:
         else:
             return self._generate_fallback(profile, benchmarks)
 
+
+
     def _call_openrouter(
         self, profile: HotelPerformanceProfile, benchmarks: PortfolioBenchmarks
     ) -> GeneratedEmail:
+        
         system_prompt = (
             "You are a Senior Strategic Partner Success Director at a premier hospitality distribution network. "
             "Every Monday morning, you send an executive weekly performance briefing to hotel owners and general managers. "
@@ -103,7 +108,7 @@ class EmailAgent:
         # Filter None values in payload
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        response = requests.post(self.openrouter_url, headers=headers, json=payload, timeout=30)
+        response = self.session.post(self.openrouter_url, headers=headers, json=payload, timeout=30)
         response.raise_for_status()
 
         result = response.json()
@@ -136,6 +141,7 @@ class EmailAgent:
         Deterministic, organically worded fallback generator when API key is unconfigured.
         Guarantees zero math errors, natural tone variation, and valid HTML output.
         """
+
         brand = profile.brandname
 
         if profile.tier == "CRITICAL_ANOMALY":
@@ -220,10 +226,12 @@ class EmailAgent:
             badge_color = "#16a34a"
             badge_bg = "#dcfce7"
             badge_text = "Portfolio Leader"
+
         elif tier == "CRITICAL_ANOMALY":
             badge_color = "#dc2626"
             badge_bg = "#fee2e2"
             badge_text = "Action Required"
+
         else:
             badge_color = "#2563eb"
             badge_bg = "#dbeafe"
@@ -235,6 +243,7 @@ class EmailAgent:
         in_ol = False
         paragraph_buf = []
 
+
         def flush_paragraph():
             nonlocal paragraph_buf
             if paragraph_buf:
@@ -244,6 +253,7 @@ class EmailAgent:
                     html_parts.append(f"<p style='color:#334155;line-height:1.6;margin:12px 0;'>{formatted}</p>")
                 paragraph_buf = []
 
+
         def close_lists():
             nonlocal in_ul, in_ol
             if in_ul:
@@ -252,6 +262,7 @@ class EmailAgent:
             if in_ol:
                 html_parts.append("</ol>")
                 in_ol = False
+
 
         for raw_line in lines:
             line = raw_line.strip()
@@ -306,6 +317,7 @@ class EmailAgent:
 
         content_body = "\n".join(html_parts)
 
+
         return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -335,6 +347,7 @@ class EmailAgent:
   </div>
 </body>
 </html>"""
+
 
     def _bold_replacer(self, text: str) -> str:
         text = re.sub(r"\*\*\*(.*?)\*\*\*", r"<strong><em>\1</em></strong>", text)

@@ -24,8 +24,29 @@ class EmailDispatcher:
         self.smtp_port = int(smtp_port or os.getenv("SMTP_PORT", 587))
         self.test_email = test_email or os.getenv("TEST_EMAIL", "").strip()
         self.output_dir = output_dir
+        self._smtp_server: Optional[smtplib.SMTP] = None
 
         os.makedirs(self.output_dir, exist_ok=True)
+
+    def _get_smtp_connection(self) -> smtplib.SMTP:
+        """Maintains and reuses an active authenticated SMTP session across batch sends."""
+        if self._smtp_server is None:
+            server = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=20)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(self.smtp_user, self.smtp_password)
+            self._smtp_server = server
+        return self._smtp_server
+
+    def close(self):
+        """Closes the active SMTP connection if open."""
+        if self._smtp_server is not None:
+            try:
+                self._smtp_server.quit()
+            except Exception:
+                pass
+            self._smtp_server = None
 
     def dispatch(
         self,
@@ -118,9 +139,5 @@ class EmailDispatcher:
         msg.attach(part1)
         msg.attach(part2)
 
-        with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=20) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(self.smtp_user, self.smtp_password)
-            server.sendmail(self.smtp_user, to_address, msg.as_string())
+        server = self._get_smtp_connection()
+        server.sendmail(self.smtp_user, to_address, msg.as_string())
