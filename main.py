@@ -24,8 +24,9 @@ def run_pipeline(
     print("=" * 72)
 
     # 1. Ingestion
-    print(f"\n[1/4] Ingesting performance data...")
     sheet_url = google_sheet_url or os.getenv("GOOGLE_SHEET_URL", "")
+    source_desc = f"live Google Sheet ({sheet_url[:45]}...)" if sheet_url else f"local file ({file_path})"
+    print(f"\n[1/4] Ingesting performance data from {source_desc}...")
     records = load_hotel_data(file_path=file_path, google_sheet_url=sheet_url)
     print(f"      Successfully loaded {len(records)} hotels (cleaned header/footer noise).")
 
