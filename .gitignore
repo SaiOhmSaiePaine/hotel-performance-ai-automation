@@ -6,3 +6,4 @@ output/emails/*.html
 output/emails/*.md
 .DS_Store
 .pytest_cache/
+.vscode/

@@ -6,14 +6,14 @@ Powered by **Python 3.11+**, **DeepSeek** via OpenRouter, and **Gmail SMTP**, wi
 
 ---
 
-## 🌟 Key Architecture & Highlights
+## Architecture and Highlights
 
 - **100% Math Accuracy via Deterministic Analytics**: All key metrics ($AOV = \text{Revenue} / \text{Orders}$), active portfolio medians, and percentage differentials are pre-computed in Python before touching the LLM.
 - **Organic, High-Touch AI Communications**: The autonomous agent (DeepSeek) receives a pre-computed context card and crafts natural, non-robotic executive briefings tailored to each hotel's unique operational reality.
 - **Hybrid 3-Tier Classification**:
-  - 🏆 **Portfolio Leaders** ($\ge$ Median Revenue & Volume): Celebratory tone with yield-maximization strategies.
-  - 📈 **Needs Optimization** (Active, below benchmark): Consultative diagnosis targeting volume vs. ticket size opportunities.
-  - 🚨 **Critical Anomaly** ($0 volume): High-urgency, empathetic technical checklist to resolve channel manager / PMS disconnects.
+  - **Top Performers** ($\ge$ Median Revenue & Volume): Celebratory tone with yield-maximization strategies.
+  - **Needs Optimization** (Active, below benchmark): Consultative diagnosis targeting volume vs. ticket size opportunities.
+  - **Critical Anomaly** ($0 volume): High-urgency, empathetic technical checklist to resolve channel manager / PMS disconnects.
 - **Smart Safety Routing**:
   - Row 1 routes directly to your verified `TEST_EMAIL` via Gmail SMTP.
   - Mock rows (`@example.com`) are automatically intercepted and archived as clean HTML and Markdown previews in `output/emails/` to prevent bounce errors.
@@ -22,16 +22,16 @@ Powered by **Python 3.11+**, **DeepSeek** via OpenRouter, and **Gmail SMTP**, wi
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-gmail ai automate/
+.
 ├── .env.example                       # Environment configuration template
 ├── .gitignore                         # Git ignore rules (protects credentials and previews)
 ├── requirements.txt                   # Production Python dependencies
 ├── pytest.ini                         # Pytest configuration
 ├── main.py                            # CLI pipeline entry point
-├── README.md                          # Quickstart & operational guide
+├── README.md                          # Quickstart and operational guide
 ├── SUBMISSION_WRITEUP.md              # Comprehensive assignment evaluation write-up
 ├── data/
 │   └── hotel_performance.xlsx         # Mock hotel dataset (10 properties + footer notes)
@@ -41,8 +41,8 @@ gmail ai automate/
 │   ├── __init__.py
 │   ├── ingestion.py                   # Data ingestion, cleaning, and Google Sheet parser
 │   ├── analytics.py                   # Deterministic analytics, AOV calculation, and 3-tier classification
-│   ├── agent.py                       # DeepSeek / OpenRouter agent with context cards & fallback
-│   └── email_service.py               # Gmail SMTP dispatcher & smart safety routing
+│   ├── agent.py                       # DeepSeek / OpenRouter agent with context cards and fallback
+│   └── email_service.py               # Gmail SMTP dispatcher and smart safety routing
 ├── tests/
 │   ├── __init__.py
 │   ├── test_analytics.py              # Unit tests for benchmarking and categorization
@@ -54,7 +54,7 @@ gmail ai automate/
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
 ### 1. Environment Setup
 
@@ -100,7 +100,7 @@ GOOGLE_SHEET_URL=
 
 ---
 
-## 🧪 Testing & Execution
+## Testing and Execution
 
 ### Run in Dry-Run Mode (Safe Verification)
 Generates all email previews and logs complete execution analytics without attempting SMTP network calls:
@@ -130,7 +130,7 @@ pytest
 
 ---
 
-## 🖥 Inspecting Generated Previews
+## Inspecting Generated Previews
 
 All generated emails are saved locally in `output/emails/` in both responsive HTML and formatted Markdown:
 
@@ -143,7 +143,7 @@ You can open any `.html` file in your web browser (e.g., `open output/emails/01_
 
 ---
 
-## ⏰ Automated Monday Morning Scheduling (GitHub Actions)
+## Automated Monday Morning Scheduling (GitHub Actions)
 
 The repository includes `.github/workflows/weekly_digest.yml` configured with:
 ```yaml
